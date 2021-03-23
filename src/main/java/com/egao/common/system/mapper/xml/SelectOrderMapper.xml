@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.egao.common.system.mapper.SelectOrderMapper">
+    <resultMap id="selectOrderList"
+               type="com.egao.common.system.entity.SelectOrder">
+        <result column="out_order_code" property="outOrderCode" jdbcType="VARCHAR"/>
+        <result column="air_order_code" property="airOrderCode" jdbcType="VARCHAR"/>
+        <result column="flight" property="flight" jdbcType="VARCHAR"/>
+        <result column="fly_code" property="flyCode" jdbcType="VARCHAR"/>
+        <result column="dep_time" property="depTime" jdbcType="VARCHAR"/>
+        <result column="passenger" property="passenger" jdbcType="VARCHAR"/>
+        <result column="order_type" property="orderType" jdbcType="VARCHAR"/>
+        <result column="order_status" property="orderStatus" jdbcType="VARCHAR"/>
+        <result column="dep_code" property="depCode" jdbcType="VARCHAR"/>
+        <result column="pnr" property="pnr" jdbcType="VARCHAR"/>
+        <result column="receivable" property="receivable" jdbcType="DOUBLE"/>
+        <result column="received" property="received" jdbcType="DOUBLE"/>
+        <result column="uncollected" property="uncollected" jdbcType="DOUBLE"/>
+        <result column="handle" property="handle" jdbcType="DOUBLE"/>
+        <result column="paid" property="paid" jdbcType="DOUBLE"/>
+        <result column="unpaid" property="unpaid" jdbcType="DOUBLE"/>
+        <result column="actual_pay" property="actualPay" jdbcType="DOUBLE"/>
+        <result column="gross_profit" property="grossProfit" jdbcType="DOUBLE"/>
+        <result column="actual_profit" property="actualProfit" jdbcType="DOUBLE"/>
+    </resultMap>
+    <select id="select" resultMap="selectOrderList">
+    select
+        out_order_code,
+        air_order_code,
+        flight,
+        fly_code,
+        dep_time,
+        passenger,
+        order_status,
+        order_type,
+        dep_code,
+        pnr,
+        receivable,
+        received,
+        uncollected,
+        handle,
+        paid,
+        unpaid,
+        actual_pay,
+        gross_profit,
+        actual_profit
+    from
+    audit_order_details a
+    <where>
+        <if test="evt.outOrderCode != null and evt.outOrderCode !=''">
+             a.out_order_code =  #{evt.outOrderCode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.airOrderCode != null and evt.airOrderCode !=''">
+            and air_order_code = #{evt.airOrderCode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderType != null and evt.orderType !=''">
+            and order_tyoe = #{evt.orderType,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderStatus != null and evt.orderStatus !=''">
+            and order_status = #{evt.orderStatus,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.pnr != null and evt.pnr !=''">
+            and pnr = #{evt.pnr,jdbcType=VARCHAR}
+        </if>
+    </where>
+    limit 10
+</select>
+
+    <resultMap id="StatisticsOrderList" type="com.egao.common.system.entity.StatisticsOrder">
+        <result column="time" property="time" jdbcType="VARCHAR"/>
+        <result column="quantity" property="quantity" jdbcType="VARCHAR"/>
+        <result column="passNum" property="passNum" jdbcType="INTEGER"/>
+        <result column="receivable" property="receivable" jdbcType="DOUBLE"/>
+        <result column="handle" property="handle" jdbcType="DOUBLE"/>
+        <result column="profit" property="profit" jdbcType="DOUBLE"/>
+    </resultMap>
+    <select id="statisticsOrder" resultMap="StatisticsOrderList">
+        select
+        SUBSTRING(order_create_time,1,13) as time,
+		COUNT(1) as quantity,
+		SUM(pass_num) as passNum,
+		SUM(receivable) as receivable,
+		SUM(handle) as handle,
+		SUM(o.receivable - o.handle)as profit
+		from
+		order_count_hours o
+		where
+		<if test="evt.StartDate != null and evt.StartDate != ''">
+            SUBSTRING(order_create_time,1,10) &gt;= #{evt.StartDate,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.EndDate != null and evt.EndDate != ''">
+            and SUBSTRING(order_create_time,1,10) &lt;= #{evt.EndDate,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderType != null and evt.orderType != ''">
+           and o.order_type = #{evt.orderType,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderStatus != null and evt.orderStatus != ''">
+            and o.order_status = #{evt.orderStatus,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.depCode != null and evt.depCode != ''">
+            and o.dep_code = #{evt.depCode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.ticketMode != null and evt.ticketMode != ''">
+            and o.ticket_mode = #{evt.ticketMode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.airline != null and evt.airline != ''">
+            and o.airline = #{evt.airline,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.policySource != null and evt.policySource != ''">
+            and SUBSTRING(o.policy_source,1,3) = #{evt.policySource,jdbcType=VARCHAR}
+        </if>
+        GROUP BY
+        SUBSTRING(order_create_time,1,13)
+    </select>
+
+    <resultMap id="AirRouteList" type="com.egao.common.system.entity.AirRoute">
+        <result column="flight" property="flight" jdbcType="VARCHAR"/>
+        <result column="cabin" property="cabin" jdbcType="VARCHAR"/>
+        <result column="quantity" property="quantity" jdbcType="VARCHAR"/>
+        <result column="passNum" property="passNum" jdbcType="INTEGER"/>
+        <result column="receivable" property="receivable" jdbcType="DOUBLE"/>
+        <result column="handle" property="handle" jdbcType="DOUBLE"/>
+        <result column="profit" property="profit" jdbcType="DOUBLE"/>
+    </resultMap>
+    <select id="airRoute" resultMap="AirRouteList">
+        select
+        flight,
+        cabin,
+        COUNT(1) as quantity,
+        SUM(pass_num) as passNum,
+        SUM(receivable) as receivable,
+        SUM(handle) as handle,
+        SUM(o.receivable - o.handle)as profit
+        from
+        order_count_hours o
+        where
+        <if test="evt.StartDate != null and evt.StartDate != ''">
+            SUBSTRING(order_create_time,1,10) &gt;= #{evt.StartDate,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.EndDate != null and evt.EndDate != ''">
+            and SUBSTRING(order_create_time,1,10) &lt;= #{evt.EndDate,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderType != null and evt.orderType != ''">
+            and o.order_type = #{evt.orderType,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.orderStatus != null and evt.orderStatus != ''">
+            and o.order_status = #{evt.orderStatus,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.depCode != null and evt.depCode != ''">
+            and o.dep_code = #{evt.depCode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.ticketMode != null and evt.ticketMode != ''">
+            and o.ticket_mode = #{evt.ticketMode,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.airline != null and evt.airline != ''">
+            and o.airline = #{evt.airline,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.policySource != null and evt.policySource != ''">
+            and SUBSTRING(o.policy_source,1,3) = #{evt.policySource,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.dep != null and evt.dep != ''">
+            and o.dep = #{evt.dep,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.arr != null and evt.arr != ''">
+            and o.arr = #{evt.arr,jdbcType=VARCHAR}
+        </if>
+        <if test="evt.cabin != null and evt.cabin != ''">
+            and o.cabin = #{evt.cabin,jdbcType=VARCHAR}
+        </if>
+        GROUP by o.flight,o.cabin ORDER BY quantity DESC
+    </select>
+
+</mapper>
